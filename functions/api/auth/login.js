@@ -1,4 +1,4 @@
-import { hashPassword, verifyPassword, createSession } from '../../../lib/auth';
+import { hashPassword, verifyPassword, createSession } from '../../../lib/auth.js';
 
 export async function onRequestPost(context) {
   const { env, request } = context;

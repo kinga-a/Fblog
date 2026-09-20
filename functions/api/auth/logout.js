@@ -1,4 +1,4 @@
-import { deleteSession, requireAuth } from '../../../lib/auth';
+import { deleteSession, requireAuth } from '../../../lib/auth.js';
 
 export async function onRequestPost(context) {
   const { env, request } = context;
