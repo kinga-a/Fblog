@@ -10,14 +10,14 @@ export async function onRequestPost(context) {
     const user = await env.BLOG_KV.get(`user:${username}`, 'json');
     
     if (!user) {
-      return Response.json({ error: 'Invalid credentials' }, { status: 401 });
+      return Response.json({ error: '用户名或密码错误' }, { status: 401 });
     }
     
     // 验证密码
     const valid = await verifyPassword(password, user.passwordHash);
     
     if (!valid) {
-      return Response.json({ error: 'Invalid credentials' }, { status: 401 });
+      return Response.json({ error: '用户名或密码错误' }, { status: 401 });
     }
     
     // 创建会话
