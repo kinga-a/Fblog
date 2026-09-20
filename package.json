@@ -6,11 +6,9 @@
   "scripts": {
     "init": "node scripts/init.js",
     "deploy": "edgeone deploy",
-    "dev": "edgeone dev"
+    "dev": "edgeone dev",
+    "build": "echo 'pure edgeone project, skip build'"
   },
-  "dependencies": {
-    
-  },
+  "dependencies": {},
   "devDependencies": {}
 }
-
