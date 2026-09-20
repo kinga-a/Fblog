@@ -1,0 +1,31 @@
+{
+  "name": "hexo-edgeone-kv",
+  "functions": {
+    "kv": [
+      {
+        "binding": "BLOG_KV",
+        "id": "your-kv-namespace-id"
+      }
+    ],
+    "blob": [
+      {
+        "binding": "BLOG_BUCKET",
+        "bucket": "your-blob-bucket-name"
+      }
+    ]
+  },
+  "routes": [
+    {
+      "pattern": "/api/*",
+      "function": "functions/api/[[default]].js"
+    },
+    {
+      "pattern": "/admin/*",
+      "function": "functions/admin/[[default]].js"
+    },
+    {
+      "pattern": "/*",
+      "function": "functions/[[default]].js"
+    }
+  ]
+}
