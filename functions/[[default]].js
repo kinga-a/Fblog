@@ -1,4 +1,4 @@
-import { getPosts, getPost } from '../lib/kv';
+import { getPosts, getPost } from '../lib/kv.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -26,29 +26,36 @@ export async function onRequestGet(context) {
   }
   
   // 分页
-  const pageMatch = path.match(/^\\/page\\/(\\d+)$/);
+  const pageMatch = path.match(/^\/page\/(\d+)$/);
   if (pageMatch) {
     return renderHomePage(env, parseInt(pageMatch[1]));
   }
   
   // 文章详情页
-  const postMatch = path.match(/^\\/post\\/([a-zA-Z0-9-]+)$/);
+  const postMatch = path.match(/^\/post\/([a-zA-Z0-9-]+)$/);
   if (postMatch) {
     return renderPostPage(env, postMatch[1]);
   }
   
   // 标签页
-  const tagMatch = path.match(/^\\/tag\\/(.+)$/);
+  const tagMatch = path.match(/^\/tag\/(.+)$/);
   if (tagMatch) {
     return renderTagPage(env, decodeURIComponent(tagMatch[1]));
   }
   
   // 分类页
-  const categoryMatch = path.match(/^\\/category\\/(.+)$/);
+  const categoryMatch = path.match(/^\/category\/(.+)$/);
   if (categoryMatch) {
     return renderCategoryPage(env, decodeURIComponent(categoryMatch[1]));
   }
   
+  // Favicon
+  if (path === '/favicon.ico' || path === '/favicon.svg') {
+    return new Response(FAVICON_SVG, {
+      headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' }
+    });
+  }
+
   // 关于页面
   if (path === '/about') {
     return renderAboutPage();
@@ -57,6 +64,9 @@ export async function onRequestGet(context) {
   // 404
   return render404();
 }
+
+// Favicon（内联 SVG）
+const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="#1a73e8"/><text x="50" y="68" font-size="55" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-weight="bold">B</text></svg>`;
 
 // 提供 Blob 文件服务
 async function serveBlob(env, key) {
