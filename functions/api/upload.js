@@ -1,5 +1,5 @@
-import { uploadImage } from '../../lib/blob';
-import { requireAuth } from '../../lib/auth';
+import { uploadImage } from '../../lib/blob.js';
+import { requireAuth } from '../../lib/auth.js';
 
 export async function onRequestPost(context) {
   const { env, request } = context;

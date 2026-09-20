@@ -1,4 +1,4 @@
-import { requireAuth } from '../../lib/auth';
+import { requireAuth } from '../../lib/auth.js';
  
 export async function onRequestGet(context) {
   const { env, request } = context;
