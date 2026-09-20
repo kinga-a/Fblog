@@ -1,6 +1,6 @@
-import { getPost, updatePost, deletePost, incrementViews } from '../../../lib/kv';
-import { requireAuth } from '../../../lib/auth';
-import { renderMarkdown } from '../../../lib/markdown';
+import { getPost, updatePost, deletePost, incrementViews } from '../../../lib/kv.js';
+import { requireAuth } from '../../../lib/auth.js';
+import { renderMarkdown } from '../../../lib/markdown.js';
 
 export async function onRequestGet(context) {
   const { env, params } = context;

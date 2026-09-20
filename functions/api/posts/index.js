@@ -1,6 +1,6 @@
-import { getPosts, createPost } from '../../../lib/kv';
-import { requireAuth } from '../../../lib/auth';
-import { renderMarkdown } from '../../../lib/markdown';
+import { getPosts, createPost } from '../../../lib/kv.js';
+import { requireAuth } from '../../../lib/auth.js';
+import { renderMarkdown } from '../../../lib/markdown.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
