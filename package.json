@@ -9,7 +9,7 @@
     "dev": "edgeone dev"
   },
   "dependencies": {
-    "@edgeone/cli": "^1.0.0"
+    
   },
   "devDependencies": {}
 }
