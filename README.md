@@ -1,45 +1,210 @@
-# EdgeBlog —— 跑在 EdgeOne Pages 上的 Typecho 风格博客
 
-Typecho 是 PHP 程序，无法在 EdgeOne Pages 的 JavaScript 边缘函数上直接运行。
-本项目用 KV + 边缘函数重新实现了 Typecho 的完整数据模型与扩展机制，
-并仿照 Typecho 的默认主题风格。主题 API 与插件钩子均对照 Typecho 设计，便于移植。
 
-## 功能
+基于 **EdgeOne Pages + KV 存储 + Blob 存储** 的动态博客系统。
 
-- 文章（Markdown、草稿/发布、分类、标签、阅读数、上一篇/下一篇）
-- 独立页面（支持 /page/slug 与 /slug 短路径）
-- 评论（昵称+网址+内容，插件可拦截）
-- 归档 / 分类 / 标签聚合页，RSS（/feed），分页
-- 后台管理 /admin：文章、页面、评论、设置、插件
-- 主题系统：functions/theme/，导出 layout/home/archive/post/page 五个方法
-- 插件系统（Typecho 风格钩子）：
-  - `header($, emit)` / `footer($, emit)` —— 向 head/页脚注入内容
-  - `content(filter)` —— 过滤文章/页面正文 HTML
-  - `comment_data(filter)` —— 评论入库前过滤，返回 null 即拦截
-  - `comment_after($, post)` —— 评论提交后动作（如邮件通知）
+## 特性
 
-## 部署到 EdgeOne Pages
+- ✅ 文章 CRUD（创建、读取、更新、删除）
+- ✅ 草稿/发布状态管理
+- ✅ Markdown 编辑器（实时预览）
+- ✅ 图片上传（Blob 存储）
+- ✅ 标签系统（自动索引）
+- ✅ 分类系统
+- ✅ 浏览统计
+- ✅ 响应式设计（移动端适配）
+- ✅ 管理后台（登录认证）
 
-1. 控制台 → EdgeOne Pages → 创建项目 → 导入本仓库（或本地上传），框架预设选「无」，构建命令留空。
-2. 项目设置 → 绑定 KV 命名空间，**变量名必须为 `BLOG_KV`**。
-3. 项目设置 → 环境变量，添加 `ADMIN_PASSWORD`（后台登录密码）。
-4. 部署完成后访问 `/admin` 登录，即可开始写文章。
+## 技术栈
 
-## 目录结构
+| 组件 | 技术 |
+|------|------|
+| 前端 | 原生 HTML/CSS/JS |
+| 后端 | EdgeOne Functions |
+| 数据库 | EdgeOne KV |
+| 文件存储 | EdgeOne Blob |
+| 部署 | EdgeOne Pages |
+
+## 项目结构
 
 ```
-functions/
-  [[default]].js   # 路由（捕获所有路径）
-  api.js           # 全部 API（登录/文章/页面/评论/设置/插件）
-  admin-page.js    # 后台管理页
-  lib/             # util / store(KV) / auth / markdown / hooks
-  theme/default.js # 默认主题（仿 Typecho）
-  plugins/         # seo / copyright 示例插件 + index.js 注册表
+hexo-edgeone-kv/
+├── functions/                    # EdgeOne Functions
+│   ├── api/                      # API 接口
+│   │   ├── auth/                 # 认证相关
+│   │   │   ├── login.js          # 登录
+│   │   │   ├── logout.js         # 登出
+│   │   │   └── me.js             # 获取当前用户
+│   │   ├── posts/                # 文章 CRUD
+│   │   │   ├── index.js          # 列表/创建
+│   │   │   └── [id].js           # 详情/更新/删除
+│   │   ├── upload.js             # 图片上传
+│   │   ├── stats.js              # 统计信息
+│   │   └── tags.js               # 标签列表
+│   └── [[default]].js            # 前台页面渲染
+├── admin/                        # 管理后台
+│   └── index.html                # 管理后台页面
+├── lib/                          # 工具库
+│   ├── kv.js                     # KV 操作封装
+│   ├── blob.js                   # Blob 操作封装
+│   ├── auth.js                   # 认证中间件
+│   └── markdown.js               # Markdown 渲染
+├── scripts/
+│   └── init.js                   # 初始化管理员账号
+├── package.json
+└── edgeone.json                  # EdgeOne 配置
 ```
 
-## 移植 Typecho 主题
+## 快速开始
 
-复制 functions/theme/default.js 为新文件，保持导出结构不变即可：
-`layout($, body)` 页面框架、`home($)` 首页列表、`archive($)` 归档、
-`post($)` 文章页、`page($)` 独立页面。`$` 即 Typecho 中 `$this` 的角色：
-`$.options`（站点设置）、`$.archive`（当前页标题）、`$.data`（文章/评论等数据）。
+### 1. 安装依赖
+
+```bash
+npm install
+```
+
+### 2. 安装 EdgeOne CLI
+
+```bash
+npm install -g @edgeone/cli
+```
+
+### 3. 登录 EdgeOne
+
+```bash
+edgeone login
+```
+
+### 4. 创建 KV 命名空间
+
+```bash
+edgeone kv create BLOG_KV
+```
+
+### 5. 创建 Blob 存储桶
+
+```bash
+edgeone blob create BLOG_BUCKET
+```
+
+### 6. 初始化管理员账号
+
+```bash
+node scripts/init.js
+```
+
+按照提示在 EdgeOne 控制台添加管理员账号。
+
+### 7. 配置 edgeone.json
+
+将 `your-kv-namespace-id` 和 `your-blob-bucket-name` 替换为实际的 ID。
+
+### 8. 部署
+
+```bash
+npm run deploy
+```
+
+## API 接口
+
+### 认证
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/auth/login` | 登录 |
+| POST | `/api/auth/logout` | 登出 |
+| GET | `/api/auth/me` | 获取当前用户 |
+
+### 文章
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/posts` | 获取文章列表 |
+| POST | `/api/posts` | 创建文章 |
+| GET | `/api/posts/:id` | 获取单篇文章 |
+| PUT | `/api/posts/:id` | 更新文章 |
+| DELETE | `/api/posts/:id` | 删除文章 |
+
+### 其他
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/upload` | 上传图片 |
+| GET | `/api/stats` | 统计信息 |
+| GET | `/api/tags` | 标签列表 |
+
+## 页面路由
+
+| 路径 | 说明 |
+|------|------|
+| `/` | 首页（文章列表） |
+| `/page/:n` | 分页 |
+| `/post/:id` | 文章详情 |
+| `/tag/:tag` | 标签页 |
+| `/category/:cat` | 分类页 |
+| `/about` | 关于页面 |
+| `/admin` | 管理后台 |
+
+## 环境变量
+
+| 变量 | 说明 |
+|------|------|
+| `BLOG_KV` | KV 存储绑定 |
+| `BLOG_BUCKET` | Blob 存储绑定 |
+
+## 使用说明
+
+### 写文章
+
+1. 登录管理后台 `/admin`
+2. 点击「写文章」
+3. 输入标题、内容（Markdown 格式）
+4. 添加标签、分类（可选）
+5. 点击「发布」或「存草稿」
+
+### 上传图片
+
+1. 进入「图片上传」页面
+2. 点击或拖拽图片到上传区域
+3. 上传成功后复制图片 URL
+4. 在文章中使用 `![描述](图片URL)`
+
+### Markdown 语法
+
+```markdown
+# 一级标题
+## 二级标题
+### 三级标题
+
+**粗体** *斜体* ~~删除线~~
+
+`行内代码`
+
+```代码块
+console.log("Hello");
+```
+
+[链接文字](https://example.com)
+![图片描述](图片URL)
+
+> 引用内容
+
+- 列表项 1
+- 列表项 2
+
+1. 有序列表 1
+2. 有序列表 2
+
+---
+```
+
+## 注意事项
+
+1. **管理员账号**：首次使用需要通过 `scripts/init.js` 初始化
+2. **图片大小**：单张图片最大 5MB
+3. **图片格式**：支持 JPG、PNG、GIF、WebP、SVG
+4. **会话有效期**：登录状态保持 7 天
+
+## License
+
+MIT
+'''
