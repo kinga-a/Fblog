@@ -1,4 +1,4 @@
-<!DOCTYPE>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -6,7 +6,7 @@
   <title>博客管理后台</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background: #f5f5f5; }
     
     .layout { display: flex; min-height: 100vh; }
     
@@ -16,6 +16,9 @@
       background: #1a1a2e;
       color: white;
       padding: 20px 0;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
     }
     .sidebar .logo {
       padding: 0 20px 20px;
@@ -25,7 +28,9 @@
     }
     .sidebar nav { padding-top: 20px; }
     .sidebar nav a {
-      display: block;
+      display: flex;
+      align-items: center;
+      gap: 10px;
       padding: 12px 20px;
       color: rgba(255,255,255,0.7);
       text-decoration: none;
@@ -38,7 +43,7 @@
     }
     
     /* 主内容区 */
-    .main { flex: 1; padding: 30px; }
+    .main { flex: 1; margin-left: 220px; padding: 30px; }
     .header {
       display: flex;
       justify-content: space-between;
@@ -58,9 +63,13 @@
     .btn-primary:hover { background: #357abd; }
     .btn-danger { background: #e74c3c; color: white; }
     .btn-danger:hover { background: #c0392b; }
+    .btn-secondary { background: #6c757d; color: white; }
+    .btn-secondary:hover { background: #5a6268; }
+    .btn-success { background: #28a745; color: white; }
+    .btn-success:hover { background: #218838; }
     
     /* 文章列表 */
-    .post-list { background: white; border-radius: 8px; overflow: hidden; }
+    .post-list { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
     .post-item {
       display: flex;
       align-items: center;
@@ -69,18 +78,19 @@
     }
     .post-item:last-child { border-bottom: none; }
     .post-item:hover { background: #f8f9fa; }
-    .post-info { flex: 1; }
-    .post-title { font-weight: 500; margin-bottom: 4px; }
-    .post-meta { font-size: 12px; color: #999; }
+    .post-info { flex: 1; min-width: 0; }
+    .post-title { font-weight: 500; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .post-meta { font-size: 12px; color: #999; display: flex; gap: 10px; flex-wrap: wrap; }
     .post-status {
       padding: 4px 10px;
       border-radius: 4px;
       font-size: 12px;
       margin-right: 10px;
+      flex-shrink: 0;
     }
     .status-published { background: #d4edda; color: #155724; }
     .status-draft { background: #fff3cd; color: #856404; }
-    .post-actions { display: flex; gap: 8px; }
+    .post-actions { display: flex; gap: 8px; flex-shrink: 0; }
     .btn-sm { padding: 6px 12px; font-size: 12px; }
     
     /* 统计卡片 */
@@ -95,9 +105,10 @@
       padding: 20px;
       border-radius: 8px;
       text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     }
     .stat-card .number { font-size: 32px; font-weight: bold; color: #4a90d9; }
-    .stat-card .label { color: #999; margin-top: 5px; }
+    .stat-card .label { color: #999; margin-top: 5px; font-size: 14px; }
     
     /* 模态框 */
     .modal {
@@ -123,6 +134,7 @@
       border-bottom: 1px solid #eee;
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
     .modal-body { padding: 20px; }
     .modal-footer {
@@ -132,36 +144,55 @@
       justify-content: flex-end;
       gap: 10px;
     }
-    .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; }
+    .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
     
     /* 表单 */
     .form-group { margin-bottom: 20px; }
-    .form-group label { display: block; margin-bottom: 8px; font-weight: 500; }
+    .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #333; }
     .form-group input,
     .form-group textarea,
     .form-group select {
       width: 100%;
-      padding: 10px;
+      padding: 10px 12px;
       border: 1px solid #ddd;
       border-radius: 6px;
       font-size: 14px;
+      transition: border-color 0.3s;
     }
-    .form-group textarea { min-height: 300px; font-family: 'Monaco', monospace; }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #4a90d9;
+    }
+    .form-group textarea { min-height: 300px; font-family: 'Monaco', 'Menlo', monospace; resize: vertical; }
     
-    /* 标签输入 */
-    .tags-input { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
-    .tags-input input { border: none; outline: none; flex: 1; }
-    .tag-chip {
-      background: #e3f2fd;
-      color: #1976d2;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
+    /* 编辑器 */
+    .editor-layout { display: flex; gap: 20px; height: calc(100vh - 280px); min-height: 400px; }
+    .editor-pane, .preview-pane { flex: 1; display: flex; flex-direction: column; }
+    .editor-pane textarea { flex: 1; resize: none; min-height: 100%; }
+    .preview-pane { background: white; border: 1px solid #ddd; border-radius: 6px; padding: 20px; overflow-y: auto; }
+    .preview-pane h1, .preview-pane h2, .preview-pane h3 { margin: 15px 0 10px; }
+    .preview-pane p { margin: 10px 0; }
+    .preview-pane pre { background: #f4f4f4; padding: 15px; border-radius: 6px; overflow-x: auto; }
+    .preview-pane code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; }
+    .preview-pane blockquote { border-left: 3px solid #4a90d9; padding-left: 15px; color: #666; margin: 15px 0; }
+    .preview-pane img { max-width: 100%; }
+    
+    /* 图片上传区域 */
+    .upload-area {
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      color: #999;
+      cursor: pointer;
+      transition: all 0.3s;
     }
-    .tag-chip .remove { cursor: pointer; }
+    .upload-area:hover { border-color: #4a90d9; color: #4a90d9; }
+    .upload-area.dragover { border-color: #4a90d9; background: #f0f7ff; }
+    .upload-preview { margin-top: 15px; }
+    .upload-preview img { max-width: 200px; border-radius: 8px; }
     
     /* 登录页 */
     .login-container {
@@ -169,16 +200,15 @@
       margin: 100px auto;
       background: white;
       padding: 40px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
-    .login-container h2 { text-align: center; margin-bottom: 30px; }
-    
-    /* 编辑器 */
-    .editor-layout { display: flex; gap: 20px; height: calc(100vh - 200px); }
-    .editor-pane, .preview-pane { flex: 1; display: flex; flex-direction: column; }
-    .editor-pane textarea { flex: 1; resize: none; }
-    .preview-pane { background: white; border-radius: 6px; padding: 20px; overflow-y: auto; }
+    .login-container h2 { text-align: center; margin-bottom: 30px; color: #333; }
+    .login-container .form-group { margin-bottom: 20px; }
+    .login-container input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+    .login-container input:focus { outline: none; border-color: #4a90d9; }
+    .login-btn { width: 100%; padding: 12px; background: #4a90d9; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
+    .login-btn:hover { background: #357abd; }
     
     /* Toast 提示 */
     .toast {
@@ -186,24 +216,56 @@
       top: 20px;
       right: 20px;
       padding: 15px 25px;
-      border-radius: 6px;
+      border-radius: 8px;
       color: white;
       z-index: 2000;
       animation: slideIn 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     .toast.success { background: #4caf50; }
     .toast.error { background: #f44336; }
+    .toast.info { background: #2196f3; }
     @keyframes slideIn {
       from { transform: translateX(100%); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
     
+    /* 加载动画 */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 3000;
+    }
+    .loading-overlay.show { display: flex; }
+    
     /* 响应式 */
     @media (max-width: 768px) {
       .sidebar { width: 60px; }
-      .sidebar .logo, .sidebar nav a span { display: none; }
+      .sidebar .logo { font-size: 0; padding: 0 0 10px; text-align: center; }
+      .sidebar .logo::before { content: '📝'; font-size: 24px; }
+      .sidebar nav a { justify-content: center; padding: 15px; }
+      .sidebar nav a span { display: none; }
+      .main { margin-left: 60px; padding: 20px; }
       .stats { grid-template-columns: repeat(2, 1fr); }
-      .editor-layout { flex-direction: column; }
+      .editor-layout { flex-direction: column; height: auto; }
+      .editor-pane textarea { min-height: 300px; }
+      .preview-pane { min-height: 300px; }
+      .post-item { flex-wrap: wrap; }
+      .post-actions { width: 100%; margin-top: 10px; justify-content: flex-end; }
     }
   </style>
 </head>
@@ -213,14 +275,12 @@
     <div id="loginPage" class="login-container" style="display:none;">
       <h2>🔐 博客管理后台</h2>
       <div class="form-group">
-        <label>用户名</label>
-        <input type="text" id="loginUsername" placeholder="请输入用户名">
+        <input type="text" id="loginUsername" placeholder="用户名" autocomplete="username">
       </div>
       <div class="form-group">
-        <label>密码</label>
-        <input type="password" id="loginPassword" placeholder="请输入密码">
+        <input type="password" id="loginPassword" placeholder="密码" autocomplete="current-password">
       </div>
-      <button class="btn btn-primary" style="width:100%" onclick="login()">登 录</button>
+      <button class="login-btn" onclick="login()">登 录</button>
     </div>
 
     <!-- 管理后台 -->
@@ -228,12 +288,12 @@
       <aside class="sidebar">
         <div class="logo">📝 博客管理</div>
         <nav>
-          <a href="#" class="active" onclick="showPage('posts')">📄 文章管理</a>
-          <a href="#" onclick="showPage('write')">✏️ 写文章</a>
-          <a href="#" onclick="showPage('tags')">🏷️ 标签管理</a>
-          <a href="#" onclick="showPage('settings')">⚙️ 设置</a>
-          <a href="/" target="_blank">🌐 查看博客</a>
-          <a href="#" onclick="logout()">🚪 退出登录</a>
+          <a href="#" class="active" onclick="showPage('posts', this)">📄 <span>文章管理</span></a>
+          <a href="#" onclick="showPage('write', this)">✏️ <span>写文章</span></a>
+          <a href="#" onclick="showPage('tags', this)">🏷️ <span>标签管理</span></a>
+          <a href="#" onclick="showPage('upload', this)">📷 <span>图片上传</span></a>
+          <a href="/" target="_blank">🌐 <span>查看博客</span></a>
+          <a href="#" onclick="logout()">🚪 <span>退出登录</span></a>
         </nav>
       </aside>
       
@@ -265,10 +325,12 @@
           </div>
           
           <div class="post-list" id="postList">
-            <!-- 文章列表将在这里渲染 -->
+            <div style="padding: 40px; text-align: center; color: #999;">
+              加载中...
+            </div>
           </div>
           
-          <div style="margin-top:20px;text-align:center;">
+          <div style="margin-top:20px;text-align:center;" id="loadMoreBtn" style="display:none;">
             <button class="btn" onclick="loadMore()">加载更多</button>
           </div>
         </div>
@@ -278,8 +340,9 @@
           <div class="header">
             <h1 id="editorTitle">写文章</h1>
             <div>
-              <button class="btn" onclick="saveDraft()">存草稿</button>
-              <button class="btn btn-primary" onclick="publishPost()">发布</button>
+              <button class="btn btn-secondary" onclick="showPage('posts')">返回列表</button>
+              <button class="btn" onclick="saveDraft()">💾 存草稿</button>
+              <button class="btn btn-success" onclick="publishPost()">🚀 发布</button>
             </div>
           </div>
           
@@ -287,22 +350,60 @@
             <input type="text" id="postTitle" placeholder="请输入文章标题..." style="font-size:20px;padding:15px;">
           </div>
           
-          <div style="display:flex;gap:10px;margin-bottom:20px;">
-            <input type="text" id="postTags" placeholder="标签，用逗号分隔" style="flex:1;">
-            <input type="text" id="postCategories" placeholder="分类" style="flex:1;">
-            <input type="text" id="postCover" placeholder="封面图URL" style="flex:1;">
+          <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+            <input type="text" id="postTags" placeholder="标签，用逗号分隔" style="flex:1;min-width:150px;">
+            <input type="text" id="postCategories" placeholder="分类，用逗号分隔" style="flex:1;min-width:150px;">
+            <input type="text" id="postCover" placeholder="封面图URL（可选）" style="flex:2;min-width:200px;">
           </div>
           
           <div class="editor-layout">
             <div class="editor-pane">
-              <textarea id="postContent" placeholder="开始用 Markdown 编写文章..." oninput="updatePreview()"></textarea>
+              <textarea id="postContent" placeholder="开始用 Markdown 编写文章...
+
+支持语法：
+# 标题
+## 二级标题
+**粗体** *斜体*
+`代码` ```代码块```
+[链接](url) ![图片](url)
+> 引用
+- 列表项" oninput="updatePreview()"></textarea>
             </div>
             <div class="preview-pane" id="previewPane">
-              <p style="color:#999;">预览区域</p>
+              <p style="color:#999;">👈 在左侧输入 Markdown 内容，这里会实时预览</p>
             </div>
           </div>
           
           <input type="hidden" id="editingPostId">
+        </div>
+
+        <!-- 标签管理页 -->
+        <div id="tagsPage" style="display:none;">
+          <div class="header">
+            <h1>标签管理</h1>
+          </div>
+          <div class="post-list" id="tagList">
+            <div style="padding: 40px; text-align: center; color: #999;">
+              加载中...
+            </div>
+          </div>
+        </div>
+
+        <!-- 图片上传页 -->
+        <div id="uploadPage" style="display:none;">
+          <div class="header">
+            <h1>图片上传</h1>
+          </div>
+          <div style="background: white; padding: 30px; border-radius: 8px;">
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+              <div style="font-size: 48px; margin-bottom: 10px;">📷</div>
+              <p>点击或拖拽图片到此处上传</p>
+              <p style="font-size: 12px; color: #999; margin-top: 5px;">支持 JPG、PNG、GIF、WebP，最大 5MB</p>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+            <div class="upload-preview" id="uploadPreview"></div>
+            <div id="uploadResult" style="margin-top: 20px;"></div>
+          </div>
         </div>
       </main>
     </div>
@@ -312,17 +413,22 @@
   <div class="modal" id="deleteModal">
     <div class="modal-content" style="max-width:400px;">
       <div class="modal-header">
-        <h3>确认删除</h3>
+        <h3>⚠️ 确认删除</h3>
         <button class="close-btn" onclick="closeModal('deleteModal')">&times;</button>
       </div>
       <div class="modal-body">
         <p>确定要删除这篇文章吗？此操作不可恢复。</p>
       </div>
       <div class="modal-footer">
-        <button class="btn" onclick="closeModal('deleteModal')">取消</button>
-        <button class="btn btn-danger" onclick="confirmDelete()">删除</button>
+        <button class="btn btn-secondary" onclick="closeModal('deleteModal')">取消</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">确认删除</button>
       </div>
     </div>
+  </div>
+
+  <!-- 加载动画 -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading"></div>
   </div>
 
   <script>
@@ -330,6 +436,7 @@
     let currentPage = 1;
     let posts = [];
     let deletePostId = null;
+    let currentTag = '';
 
     // 初始化
     async function init() {
@@ -339,7 +446,9 @@
         if (valid) {
           showAdmin();
           loadPosts();
+          setupUploadArea();
         } else {
+          localStorage.removeItem('auth_token');
           showLogin();
         }
       } else {
@@ -357,10 +466,25 @@
       document.getElementById('adminPage').style.display = 'flex';
     }
 
+    function showLoading() {
+      document.getElementById('loadingOverlay').classList.add('show');
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingOverlay').classList.remove('show');
+    }
+
     // 登录
     async function login() {
-      const username = document.getElementById('loginUsername').value;
+      const username = document.getElementById('loginUsername').value.trim();
       const password = document.getElementById('loginPassword').value;
+      
+      if (!username || !password) {
+        toast('请输入用户名和密码', 'error');
+        return;
+      }
+      
+      showLoading();
       
       try {
         const res = await fetch('/api/auth/login', {
@@ -375,14 +499,22 @@
           localStorage.setItem('auth_token', data.token);
           showAdmin();
           loadPosts();
+          setupUploadArea();
           toast('登录成功', 'success');
         } else {
           toast(data.error || '登录失败', 'error');
         }
       } catch (e) {
-        toast('网络错误', 'error');
+        toast('网络错误，请稍后重试', 'error');
+      } finally {
+        hideLoading();
       }
     }
+
+    // 回车登录
+    document.getElementById('loginPassword')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') login();
+    });
 
     // 检查认证
     async function checkAuth(token) {
@@ -397,59 +529,108 @@
     }
 
     // 登出
-    function logout() {
+    async function logout() {
+      const token = localStorage.getItem('auth_token');
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } catch (e) {}
+      
       localStorage.removeItem('auth_token');
       showLogin();
       toast('已退出登录', 'success');
     }
 
     // 页面切换
-    function showPage(page) {
-      document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
-      event.target.classList.add('active');
+    function showPage(page, el) {
+      // 更新侧边栏激活状态
+      if (el) {
+        document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
+        el.classList.add('active');
+      }
       
       document.getElementById('postsPage').style.display = page === 'posts' ? 'block' : 'none';
       document.getElementById('writePage').style.display = page === 'write' ? 'block' : 'none';
+      document.getElementById('tagsPage').style.display = page === 'tags' ? 'block' : 'none';
+      document.getElementById('uploadPage').style.display = page === 'upload' ? 'block' : 'none';
       
-      if (page === 'write') {
+      if (page === 'write' && !document.getElementById('editingPostId').value) {
         openEditor();
+      }
+      if (page === 'tags') {
+        loadTags();
       }
     }
 
     // 加载文章列表
     async function loadPosts() {
       const token = localStorage.getItem('auth_token');
+      showLoading();
+      
       try {
         const res = await fetch(`/api/posts?admin=true&page=${currentPage}&pageSize=20`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        
+        if (!res.ok) {
+          if (res.status === 401) {
+            logout();
+            return;
+          }
+          throw new Error('加载失败');
+        }
+        
         const data = await res.json();
         
-        posts = data.posts;
+        if (currentPage === 1) {
+          posts = data.posts;
+        } else {
+          posts = [...posts, ...data.posts];
+        }
+        
         renderPosts();
         updateStats(data);
+        
+        document.getElementById('loadMoreBtn').style.display = 
+          data.totalPages > currentPage ? 'block' : 'none';
       } catch (e) {
-        toast('加载失败', 'error');
+        toast('加载文章失败', 'error');
+      } finally {
+        hideLoading();
       }
     }
 
     // 渲染文章列表
     function renderPosts() {
       const container = document.getElementById('postList');
+      
+      if (posts.length === 0) {
+        container.innerHTML = `
+          <div style="padding: 60px; text-align: center; color: #999;">
+            <div style="font-size: 48px; margin-bottom: 15px;">📝</div>
+            <p>还没有文章，点击右上角"写文章"开始创作吧！</p>
+          </div>
+        `;
+        return;
+      }
+      
       container.innerHTML = posts.map(post => `
         <div class="post-item">
           <div class="post-info">
             <div class="post-title">${escapeHtml(post.title)}</div>
             <div class="post-meta">
-              ${post.tags.map(t => `<span style="color:#4a90d9;margin-right:5px;">#${t}</span>`).join('')}
-              · ${formatDate(post.updatedAt)}
-              · ${post.views || 0} 次浏览
+              ${post.tags.map(t => `<span style="color:#4a90d9;">#${escapeHtml(t)}</span>`).join('')}
+              <span>📅 ${formatDate(post.updatedAt)}</span>
+              <span>👁️ ${post.views || 0} 次浏览</span>
             </div>
           </div>
           <span class="post-status status-${post.status}">${post.status === 'published' ? '已发布' : '草稿'}</span>
           <div class="post-actions">
-            <button class="btn btn-sm btn-primary" onclick="editPost('${post.id}')">编辑</button>
-            <button class="btn btn-sm btn-danger" onclick="deletePost('${post.id}')">删除</button>
+            <button class="btn btn-sm btn-primary" onclick="editPost('${post.id}')">✏️ 编辑</button>
+            ${post.status === 'draft' ? `<button class="btn btn-sm btn-success" onclick="quickPublish('${post.id}')">🚀 发布</button>` : ''}
+            <button class="btn btn-sm btn-danger" onclick="deletePost('${post.id}')">🗑️ 删除</button>
           </div>
         </div>
       `).join('');
@@ -457,7 +638,7 @@
 
     // 更新统计
     function updateStats(data) {
-      document.getElementById('totalPosts').textContent = data.total;
+      document.getElementById('totalPosts').textContent = data.total || 0;
       document.getElementById('publishedPosts').textContent = posts.filter(p => p.status === 'published').length;
       document.getElementById('draftPosts').textContent = posts.filter(p => p.status === 'draft').length;
       document.getElementById('totalViews').textContent = posts.reduce((sum, p) => sum + (p.views || 0), 0);
@@ -488,13 +669,41 @@
         document.getElementById('postCategories').value = '';
         document.getElementById('postCover').value = '';
         document.getElementById('editingPostId').value = '';
-        document.getElementById('previewPane').innerHTML = '<p style="color:#999;">预览区域</p>';
+        document.getElementById('previewPane').innerHTML = '<p style="color:#999;">👈 在左侧输入 Markdown 内容，这里会实时预览</p>';
       }
     }
 
     // 编辑文章
     function editPost(id) {
       openEditor(id);
+    }
+
+    // 快速发布
+    async function quickPublish(id) {
+      const token = localStorage.getItem('auth_token');
+      showLoading();
+      
+      try {
+        const res = await fetch(`/api/posts/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ status: 'published' })
+        });
+        
+        if (res.ok) {
+          toast('发布成功', 'success');
+          loadPosts();
+        } else {
+          toast('发布失败', 'error');
+        }
+      } catch (e) {
+        toast('网络错误', 'error');
+      } finally {
+        hideLoading();
+      }
     }
 
     // 删除文章
@@ -506,6 +715,8 @@
     // 确认删除
     async function confirmDelete() {
       const token = localStorage.getItem('auth_token');
+      showLoading();
+      
       try {
         const res = await fetch(`/api/posts/${deletePostId}`, {
           method: 'DELETE',
@@ -515,12 +726,15 @@
         if (res.ok) {
           toast('删除成功', 'success');
           closeModal('deleteModal');
+          currentPage = 1;
           loadPosts();
         } else {
           toast('删除失败', 'error');
         }
       } catch (e) {
         toast('网络错误', 'error');
+      } finally {
+        hideLoading();
       }
     }
 
@@ -538,15 +752,28 @@
     async function savePost(status) {
       const token = localStorage.getItem('auth_token');
       const postId = document.getElementById('editingPostId').value;
+      const title = document.getElementById('postTitle').value.trim();
+      const content = document.getElementById('postContent').value.trim();
+      
+      if (!title) {
+        toast('请输入文章标题', 'error');
+        return;
+      }
+      if (!content) {
+        toast('请输入文章内容', 'error');
+        return;
+      }
       
       const data = {
-        title: document.getElementById('postTitle').value,
-        content: document.getElementById('postContent').value,
+        title,
+        content,
         tags: document.getElementById('postTags').value.split(',').map(t => t.trim()).filter(Boolean),
         categories: document.getElementById('postCategories').value.split(',').map(c => c.trim()).filter(Boolean),
-        cover: document.getElementById('postCover').value,
+        cover: document.getElementById('postCover').value.trim(),
         status
       };
+      
+      showLoading();
       
       try {
         const url = postId ? `/api/posts/${postId}` : '/api/posts';
@@ -564,7 +791,8 @@
         const result = await res.json();
         
         if (result.success) {
-          toast(status === 'published' ? '发布成功' : '草稿已保存', 'success');
+          toast(status === 'published' ? '🚀 发布成功' : '💾 草稿已保存', 'success');
+          currentPage = 1;
           showPage('posts');
           loadPosts();
         } else {
@@ -572,6 +800,8 @@
         }
       } catch (e) {
         toast('网络错误', 'error');
+      } finally {
+        hideLoading();
       }
     }
 
@@ -580,19 +810,198 @@
       const content = document.getElementById('postContent').value;
       const preview = document.getElementById('previewPane');
       
-      // 简单的 Markdown 渲染（实际项目建议用 marked.js）
-      let html = content
-        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-        .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-        .replace(/\*(.*)\*/gim, '<em>$1</em>')
-        .replace(/!\[(.*?)\]\((.*?)\)/gim, '<img alt="$1" src="$2">')
-        .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2">$1</a>')
-        .replace(/`(.*?)`/gim, '<code>$1</code>')
-        .replace(/\n/gim, '<br>');
+      if (!content.trim()) {
+        preview.innerHTML = '<p style="color:#999;">👈 在左侧输入 Markdown 内容，这里会实时预览</p>';
+        return;
+      }
       
-      preview.innerHTML = html || '<p style="color:#999;">预览区域</p>';
+      let html = content
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      
+      // 代码块
+      html = html.replace(/```(\\w+)?\\n([\\s\\S]*?)```/g, (match, lang, code) => {
+        return `<pre><code>${code.trim()}</code></pre>`;
+      });
+      
+      // 行内代码
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+      
+      // 标题
+      html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+      html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+      html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+      html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+      
+      // 粗体和斜体
+      html = html.replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>');
+      html = html.replace(/\\*([^*]+)\\*/g, '<em>$1</em>');
+      
+      // 图片和链接
+      html = html.replace(/!\\[([^\\]]*)\\]\\(([^)]+)\\)/g, '<img alt="$1" src="$2" style="max-width:100%">');
+      html = html.replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, '<a href="$2" target="_blank">$1</a>');
+      
+      // 引用
+      html = html.replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>');
+      
+      // 列表
+      html = html.replace(/^\\s*[-*+] (.*$)/gim, '<li>$1</li>');
+      
+      // 分割线
+      html = html.replace(/^---+$/gim, '<hr>');
+      
+      // 换行
+      html = html.replace(/\\n\\n/g, '</p><p>');
+      html = html.replace(/\\n/g, '<br>');
+      
+      html = '<p>' + html + '</p>';
+      html = html.replace(/<p>(<h[1-6]>)/g, '$1');
+      html = html.replace(/(<\\/(?:h[1-6]|ul|ol|blockquote|pre)>)<\\/p>/g, '$1');
+      html = html.replace(/<p><\\/p>/g, '');
+      
+      preview.innerHTML = html;
+    }
+
+    // 加载标签
+    async function loadTags() {
+      const token = localStorage.getItem('auth_token');
+      
+      try {
+        const res = await fetch('/api/tags', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        renderTags(data.tags || []);
+      } catch (e) {
+        document.getElementById('tagList').innerHTML = '<div style="padding:40px;text-align:center;color:#999;">加载失败</div>';
+      }
+    }
+
+    // 渲染标签
+    function renderTags(tags) {
+      const container = document.getElementById('tagList');
+      
+      if (tags.length === 0) {
+        container.innerHTML = '<div style="padding:60px;text-align:center;color:#999;">暂无标签</div>';
+        return;
+      }
+      
+      container.innerHTML = tags.map(tag => `
+        <div class="post-item">
+          <div class="post-info">
+            <div class="post-title">🏷️ ${escapeHtml(tag.name)}</div>
+            <div class="post-meta">${tag.count} 篇文章</div>
+          </div>
+          <div class="post-actions">
+            <button class="btn btn-sm btn-primary" onclick="viewTag('${escapeHtml(tag.name)}')">查看文章</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 查看标签文章
+    function viewTag(tag) {
+      window.open(`/tag/${encodeURIComponent(tag)}`, '_blank');
+    }
+
+    // 设置上传区域
+    function setupUploadArea() {
+      const uploadArea = document.getElementById('uploadArea');
+      if (!uploadArea) return;
+      
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+      });
+      
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+      });
+      
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          uploadFile(files[0]);
+        }
+      });
+    }
+
+    // 处理文件选择
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        uploadFile(file);
+      }
+    }
+
+    // 上传文件
+    async function uploadFile(file) {
+      const token = localStorage.getItem('auth_token');
+      
+      // 预览
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById('uploadPreview').innerHTML = `
+          <p style="margin-bottom:10px;color:#666;">已选择：${file.name} (${formatFileSize(file.size)})</p>
+          <img src="${e.target.result}" alt="预览">
+        `;
+      };
+      reader.readAsDataURL(file);
+      
+      showLoading();
+      
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+          document.getElementById('uploadResult').innerHTML = `
+            <div style="background:#d4edda;padding:15px;border-radius:8px;color:#155724;">
+              <p style="margin-bottom:10px;">✅ 上传成功！</p>
+              <div style="display:flex;gap:10px;align-items:center;background:white;padding:10px;border-radius:6px;">
+                <code style="flex:1;overflow-x:auto;" id="uploadedUrl">${data.url}</code>
+                <button class="btn btn-sm btn-primary" onclick="copyToClipboard('${data.url}')">复制</button>
+              </div>
+              <p style="margin-top:10px;font-size:12px;color:#666;">在文章中使用：![图片描述](${data.url})</p>
+            </div>
+          `;
+          toast('上传成功', 'success');
+        } else {
+          toast(data.error || '上传失败', 'error');
+        }
+      } catch (e) {
+        toast('网络错误', 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // 复制到剪贴板
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        toast('已复制到剪贴板', 'success');
+      }).catch(() => {
+        // 降级方案
+        const input = document.createElement('input');
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        toast('已复制到剪贴板', 'success');
+      });
     }
 
     // 关闭模态框
@@ -608,13 +1017,27 @@
 
     // 工具函数
     function escapeHtml(text) {
+      if (!text) return '';
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
     }
 
     function formatDate(timestamp) {
-      return new Date(timestamp).toLocaleDateString('zh-CN');
+      if (!timestamp) return '';
+      return new Date(timestamp).toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
 
     function toast(message, type = 'success') {
@@ -622,7 +1045,11 @@
       el.className = `toast ${type}`;
       el.textContent = message;
       document.body.appendChild(el);
-      setTimeout(() => el.remove(), 3000);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity 0.3s';
+        setTimeout(() => el.remove(), 300);
+      }, 3000);
     }
 
     // 启动
